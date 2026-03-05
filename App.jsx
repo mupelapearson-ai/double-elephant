@@ -1,102 +1,119 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 export default function App() {
-  const [tracks, setTracks] = useState([]);
-  const [title, setTitle] = useState("");
-  const [audioFile, setAudioFile] = useState(null);
-  const [coverFile, setCoverFile] = useState(null);
-  const [error, setError] = useState("");
+  const [songs, setSongs] = useState([]);
+  const [form, setForm] = useState({
+    title: "",
+    artist: "",
+    genre: "Hip Hop",
+    audio: "",
+    cover: "",
+    comments: []
+  });
 
-  const upload = (e) => {
-    e.preventDefault();
-    setError("");
+  const genres = [
+    "Hip Hop",
+    "Country",
+    "Afrobeat",
+    "R&B",
+    "Pop",
+    "Gospel",
+    "Dancehall"
+  ];
 
-    if (!title.trim()) {
-      setError("Please enter a song title");
-      return;
-    }
-    if (!audioFile) {
-      setError("Please select an audio file");
-      return;
-    }
-    if (!coverFile) {
-      setError("Please select a cover image");
-      return;
-    }
-
-    setTracks([
-      {
-        id: Date.now(),
-        title,
-        audioUrl: URL.createObjectURL(audioFile),
-        coverUrl: URL.createObjectURL(coverFile),
-        likes: 0,
-        comments: []
-      },
-      ...tracks
-    ]);
-
-    // Clear form after upload
-    setTitle("");
-    setAudioFile(null);
-    setCoverFile(null);
+  const uploadSong = () => {
+    if (!form.title || !form.audio || !form.cover) return;
+    setSongs([{ ...form }, ...songs]);
+    setForm({
+      title: "",
+      artist: "",
+      genre: "Hip Hop",
+      audio: "",
+      cover: "",
+      comments: []
+    });
   };
 
-  const like = (id) => {
-    setTracks(tracks.map(t => t.id === id ? {...t, likes: t.likes + 1} : t));
-  };
-
-  const deleteTrack = (id) => {
-    setTracks(tracks.filter(t => t.id !== id));
+  const addComment = (index, text) => {
+    const updated = [...songs];
+    updated[index].comments.push(text);
+    setSongs(updated);
   };
 
   return (
-    <div style={{maxWidth:900,margin:"auto",padding:20}}>
-      <h1 style={{textAlign:"center",fontSize:40,marginBottom:30}}>🎵 Double Elephant</h1>
+    <div style={{fontFamily:"sans-serif",background:"#0f172a",color:"white",minHeight:"100vh"}}>
+      
+      <nav style={{padding:"15px",background:"#020617",display:"flex",justifyContent:"space-between"}}>
+        <h2>🐘 Double Elephant</h2>
+        <div>Home | Upload</div>
+      </nav>
 
-      <form onSubmit={upload} style={{marginBottom:30,background:"#1a1a2e",padding:20,borderRadius:10}}>
-        <input 
-          placeholder="Song title" 
-          value={title}
-          onChange={e=>setTitle(e.target.value)}
-          required
-        />
-        <input 
-          type="file" 
-          accept="audio/*" 
-          onChange={e=>setAudioFile(e.target.files[0])}
-          required
-        />
-        <input 
-          type="file" 
-          accept="image/*" 
-          onChange={e=>setCoverFile(e.target.files[0])}
-          required
-        />
-        {error && <div style={{color:"#ff6b6b",marginBottom:10,fontSize:14}}>{error}</div>}
-        <button type="submit" style={{width:"100%"}}>Upload Song</button>
-      </form>
+      <h2 style={{padding:"20px"}}>🔥 Top Songs</h2>
 
-      {tracks.length === 0 && !error && <p style={{textAlign:"center",color:"#888"}}>No tracks yet. Upload one to get started!</p>}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:"20px",padding:"20px"}}>
+        {songs.map((song,i)=>(
+          <div key={i} style={{background:"#1e293b",padding:"15px",borderRadius:"12px"}}>
+            <img src={song.cover} width="100%" style={{borderRadius:"10px"}}/>
+            <h3>{song.title}</h3>
+            <p>{song.artist}</p>
+            <p>🎵 {song.genre}</p>
 
-      {tracks.map(track => (
-        <div key={track.id} style={{marginBottom:30,background:"#1a1a2e",padding:15,borderRadius:10}}>
-          <img src={track.coverUrl} style={{width:"100%",maxHeight:250,objectFit:"cover",borderRadius:5,marginBottom:15}} alt={track.title}/>
-          <h3 style={{marginBottom:10}}>{track.title}</h3>
-          <audio controls src={track.audioUrl} style={{width:"100%",marginBottom:15}}/>
-          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-            <button onClick={()=>like(track.id)}>❤️ Like ({track.likes})</button>
-            <a 
-              href={track.audioUrl} 
-              download={track.title}
-              style={{textDecoration:"none"}}
-            >
+            <audio controls src={song.audio} style={{width:"100%"}} />
+
+            <a href={song.audio} download>
               <button>⬇ Download</button>
             </a>
-            <button onClick={()=>deleteTrack(track.id)} style={{background:"#ff6b6b",color:"white"}}>🗑️ Delete</button>
+
+            <div>
+              <h4>Comments</h4>
+              {song.comments.map((c,ci)=><p key={ci}>💬 {c}</p>)}
+              <input
+                placeholder="Add comment"
+                onKeyDown={(e)=>{
+                  if(e.key==="Enter"){
+                    addComment(i,e.target.value);
+                    e.target.value="";
+                  }
+                }}
+              />
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
+      <div style={{padding:"20px"}}>
+        <h2>Upload Song</h2>
+
+        <input placeholder="Song Title"
+          value={form.title}
+          onChange={e=>setForm({...form,title:e.target.value})}
+        /><br/><br/>
+
+        <input placeholder="Artist Name"
+          value={form.artist}
+          onChange={e=>setForm({...form,artist:e.target.value})}
+        /><br/><br/>
+
+        <select
+          value={form.genre}
+          onChange={e=>setForm({...form,genre:e.target.value})}
+        >
+          {genres.map(g=><option key={g}>{g}</option>)}
+        </select><br/><br/>
+
+        <input placeholder="Audio URL (.mp3 link)"
+          value={form.audio}
+          onChange={e=>setForm({...form,audio:e.target.value})}
+        /><br/><br/>
+
+        <input placeholder="Cover Image URL"
+          value={form.cover}
+          onChange={e=>setForm({...form,cover:e.target.value})}
+        /><br/><br/>
+
+        <button onClick={uploadSong}>Upload</button>
+      </div>
+
     </div>
   );
 }
